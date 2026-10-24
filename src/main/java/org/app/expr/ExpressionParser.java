@@ -1,15 +1,13 @@
-package org.app;
+package org.app.expr;
 
-public class Parser {
+public class ExpressionParser {
 
     private final String text;
     private int pos = 0;
 
-    public Parser(String text) {
+    public ExpressionParser(String text) {
         this.text = text;
     }
-
-    // --- Вспомогательные методы ---
 
     private void skipWhitespace() {
         while (pos < text.length() && Character.isWhitespace(text.charAt(pos))) {
@@ -33,26 +31,17 @@ public class Parser {
         return ch == '+' || ch == '-' || ch == '*' || ch == '/';
     }
 
-    // --- Правило: выраж := [+-] операнд {бин. операция операнд} ---
-
     public void parseExpr() {
-        // [+-]
         char next = peek();
         if (next == '+' || next == '-') {
-            getChar(); // пропуск унарного знака
+            getChar();
         }
-
-        // операнд
         parseOperand();
-
-        // {бин. операция операнд}
         while (isBinOperation(peek())) {
-            getChar(); // пропуск бинарной операции
+            getChar();
             parseOperand();
         }
     }
-
-    // --- Правило: операнд := имя | константа | "(" выраж ")" ---
 
     public void parseOperand() {
         char ch = peek();
@@ -61,18 +50,16 @@ public class Parser {
             throw new RuntimeException("Ошибка: ожидался операнд в конце строки (позиция " + pos + ")");
         }
 
-        // "(" выраж ")"
         if (ch == '(') {
-            getChar(); // съедаем '('
+            getChar();
             parseExpr();
             if (peek() != ')') {
                 throw new RuntimeException("Ошибка: пропущена закрывающая скобка ')' на позиции " + pos);
             }
-            getChar(); // съедаем ')'
+            getChar();
             return;
         }
 
-        // константа
         if (Character.isDigit(ch)) {
             while (pos < text.length() && Character.isDigit(text.charAt(pos))) {
                 pos++;
@@ -80,7 +67,6 @@ public class Parser {
             return;
         }
 
-        // имя
         if (Character.isLetter(ch) || ch == '_') {
             while (pos < text.length() && (Character.isLetterOrDigit(text.charAt(pos)) || text.charAt(pos) == '_')) {
                 pos++;
@@ -91,7 +77,6 @@ public class Parser {
         throw new RuntimeException("Ошибка: недопустимый символ операнда '" + ch + "' на позиции " + pos);
     }
 
-    // Главный метод синтаксического анализа
     public boolean parse() {
         parseExpr();
         skipWhitespace();
@@ -99,23 +84,5 @@ public class Parser {
             throw new RuntimeException("Ошибка: лишние символы после выражения на позиции " + pos + " ('" + text.substring(pos) + "')");
         }
         return true;
-    }
-
-    // --- Пример использования ---
-
-    public static void main(String[] args) {
-        String[] tests = {
-                "(x + y) * z"
-        };
-
-        for (String test : tests) {
-            try {
-                Parser parser = new Parser(test);
-                parser.parse();
-                System.out.println("✅ Выражение корректно: " + test);
-            } catch (Exception e) {
-                System.out.println("❌ " + e.getMessage() + " | Выражение: " + test);
-            }
-        }
     }
 }
